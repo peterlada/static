@@ -83,7 +83,7 @@ class Cling(object):
         log.addHandler(hdlr)
         return log
 
-    def __call__(self, environ, start_response):
+    def __call__(self, environ, start_response, headers=None):
         """Respond to a request when called in the usual WSGI way."""
         if environ['REQUEST_METHOD'] not in ('GET', 'HEAD'):
             return self.method_not_allowed(environ, start_response)
@@ -103,9 +103,11 @@ class Cling(object):
         content_type = self._guess_type(full_path)
         try:
             etag, last_modified = self._conditions(full_path, environ)
-            headers = [('Date', formatdate(time.time())),
+            if not headers:
+                headers = []
+            headers.extend([('Date', formatdate(time.time())),
                        ('Last-Modified', last_modified),
-                       ('ETag', etag)]
+                       ('ETag', etag)])
             if_modified = environ.get('HTTP_IF_MODIFIED_SINCE')
             if if_modified and (parsedate(if_modified)
                                 >= parsedate(last_modified)):
